@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: #070907;
+  color: #b9e8c5;
+  min-height: 100%;
+}
+
+body {
+  font-family: ui-monospace, SFMono-Regular, "JetBrains Mono", "Fira Code", Menlo,
+    Consolas, monospace;
+  position: relative;
+}
+
+/* ---- CRT grain + scanlines overlay ---- */
+body::before {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0px,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(0, 0, 0, 0.08) 3px
+  );
+  mix-blend-mode: multiply;
+}
+
+body::after {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 51;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+}
+
+/* soft vignette */
+.crt-vignette {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 49;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0) 55%,
+    rgba(0, 0, 0, 0.45) 100%
+  );
+}
+
+.text-glow {
+  text-shadow: 0 0 6px rgba(51, 255, 102, 0.55), 0 0 20px rgba(51, 255, 102, 0.2);
+}
+
+.text-glow-amber {
+  text-shadow: 0 0 6px rgba(255, 176, 0, 0.55), 0 0 18px rgba(255, 176, 0, 0.2);
+}
+
+.panel {
+  @apply border border-charcoal-600 bg-charcoal-900/80 rounded-sm;
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5);
+}
+
+.panel-title {
+  @apply text-[11px] tracking-[0.25em] uppercase text-phosphor-dim border-b border-charcoal-600 px-3 py-2 flex items-center gap-2;
+}
+
+.redacted-bar {
+  @apply inline-block h-3 bg-charcoal-600 rounded-[1px];
+}
+
+/* thin scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a352a #0b0f0b;
+}
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #2a352a;
+}
+*::-webkit-scrollbar-track {
+  background: #0b0f0b;
+}
+
+.transcript-body {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

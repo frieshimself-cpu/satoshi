@@ -1,0 +1,170 @@
+{
+  "note": "Five evidence dossiers for the WHO IS SATOSHI? reasoning exercise. Each dossier is neutral: it describes documented, public evidence about Satoshi Nakamoto without attributing it to any candidate. Attribution and weighing are the analyst's job, on stage, probabilistically.",
+  "dossiers": [
+    {
+      "index": 1,
+      "codename": "FINGERPRINT",
+      "title": "Writing & Linguistic Fingerprint",
+      "summary": "What Satoshi's ~80,000 public words reveal about the writer.",
+      "items": [
+        {
+          "heading": "Corpus",
+          "content": "Satoshi's public output consists of the 9-page white paper (Oct 2008), ~575 forum posts on bitcointalk.org and the P2P Foundation forum, and dozens of emails to the cryptography mailing list and individual developers (2008–2011). Total: roughly 80,000 words, all in fluent, precise English.",
+          "source": "Nakamoto Institute archives; satoshi.nakamotoinstitute.org"
+        },
+        {
+          "heading": "British spellings and idioms",
+          "content": "Satoshi consistently used Commonwealth spellings — 'colour', 'favour', 'analyse', 'defence', 'optimise' — and British idioms such as 'bloody hard' and 'flat' (for apartment) in forum posts. The genesis block famously embeds a headline from The Times of London: 'Chancellor on brink of second bailout for banks' (3 Jan 2009).",
+          "source": "Satoshi's posts (public archives); Bitcoin genesis block coinbase text"
+        },
+        {
+          "heading": "Typographic habits",
+          "content": "Satoshi double-spaced after full stops in nearly all writing, a habit associated with people who learned to type on typewriters or older word processors, and used formal constructions ('It is', 'We propose') alongside casual forum register when appropriate.",
+          "source": "Corpus analyses of Satoshi's posts (public stylometry write-ups)"
+        },
+        {
+          "heading": "Academic register",
+          "content": "The white paper follows academic-paper conventions (abstract, numbered sections, citations) but was not submitted to any venue; it cites Hashcash (Back) and b-money (Dai) but not bit gold (Szabo), despite bit gold's conceptual closeness.",
+          "source": "Bitcoin white paper (2008)"
+        },
+        {
+          "heading": "Stylometric studies",
+          "content": "Multiple independent stylometric analyses have been published. The most cited, from Aston University's Centre for Forensic Linguistics (2014), compared the white paper to writings of 11 candidates. Stylometry on short technical corpora is contested: other analyses reached different rankings, and experts caution that technical writing compresses style variance.",
+          "source": "Aston University press release (Apr 2014); subsequent methodological critiques"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "codename": "NIGHTOWL",
+      "title": "Timezone & Activity Patterns",
+      "summary": "When Satoshi was awake, posting, committing, and mining.",
+      "items": [
+        {
+          "heading": "Posting-time histogram",
+          "content": "Aggregating the UTC timestamps of Satoshi's 500+ forum posts and emails shows a pronounced quiet window from roughly 05:00 to 11:00 UTC, with activity spread across the remaining hours. If the quiet window is sleep (approx. midnight–6am local), it is most consistent with UK time (GMT) or US Eastern time (EST) for a late-sleeping schedule; it fits US Pacific only for an extreme night owl, and fits Japanese daytime hours poorly.",
+          "source": "Public timestamp analyses (e.g. Stefan Thomas's 2011 histogram; later replications)"
+        },
+        {
+          "heading": "The white paper metadata",
+          "content": "The PDF of the white paper and Satoshi's emails were sent at times consistent with the same pattern. Satoshi's claimed profile on the P2P Foundation forum stated he was a 37-year-old male living in Japan — a claim nearly all researchers treat as deliberate misdirection given the language and timing evidence.",
+          "source": "P2P Foundation profile (2009); white paper PDF metadata"
+        },
+        {
+          "heading": "Code commit times",
+          "content": "Satoshi's SourceForge commits follow the same envelope as the forum posts — no commits in the 05:00–11:00 UTC window across two years of activity, a consistency that suggests a real sleep schedule rather than deliberate randomization.",
+          "source": "SourceForge commit logs (public archives)"
+        },
+        {
+          "heading": "Holiday tells",
+          "content": "Analysts have noted activity dips and spikes around Western holidays: Satoshi posted on Japanese holidays but showed reduced activity in late December 2008 while finalizing the software, and notably went quiet for about 10 days around the launch of v0.1 in January 2009.",
+          "source": "Public activity analyses of Satoshi's post history"
+        },
+        {
+          "heading": "The Patoshi mining pattern",
+          "content": "Sergio Demian Lerner's analysis of early block nonce patterns ('Patoshi') indicates a single dominant early miner — presumed to be Satoshi — who mined roughly 1M BTC in 2009–2010, deliberately throttled mining speed, and left specific nonce ranges untouched. The mining machine also shows a consistent daily off-window overlapping the posting quiet window.",
+          "source": "S.D. Lerner, 'The Well Deserved Fortune of Satoshi Nakamoto' (2013) and follow-ups"
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "codename": "CODESIGN",
+      "title": "Code & Cryptographic Style",
+      "summary": "What the original Bitcoin codebase says about its author.",
+      "items": [
+        {
+          "heading": "Language and platform",
+          "content": "Bitcoin v0.1 (Jan 2009) was ~16,000 lines of C++ built for Windows with a wxWidgets GUI. Early code was Windows-first (Linux support came later via contributors), suggesting the author's daily environment was Windows — unusual for the Unix-centric cypherpunk milieu.",
+          "source": "Bitcoin v0.1 source release (public archives)"
+        },
+        {
+          "heading": "Coding conventions",
+          "content": "The code used Hungarian notation (a Microsoft-associated convention: 'vtxPrev', 'mapWallet', 'fClient'), extensive use of the STL and Boost, and a monolithic architecture. Reviewers described it as the work of a strong, self-taught or industry-practiced engineer rather than an academic: brilliant systems design, but few tests, sparse comments, and idiosyncratic structure.",
+          "source": "Code reviews by early contributors (public mailing list and forum posts)"
+        },
+        {
+          "heading": "Cryptographic choices",
+          "content": "Bitcoin chose secp256k1 — a Koblitz curve almost never used in practice at the time (NIST P-256 was standard) — plus SHA-256 and RIPEMD-160. secp256k1 later proved a prescient choice (no suspected NSA-influenced constants). The choices indicate someone current with applied-crypto debates but willing to deviate from standards.",
+          "source": "Bitcoin source; subsequent cryptographic commentary"
+        },
+        {
+          "heading": "What the code avoided",
+          "content": "The design sidesteps academic e-cash machinery (blind signatures, Chaumian mints) entirely, instead combining known primitives — Hashcash-style proof-of-work, Merkle trees, timestamp chains — into an engineering solution to Byzantine consensus. Several academics initially dismissed it; engineers adopted it.",
+          "source": "Cryptography mailing list thread (Nov 2008), public archive"
+        },
+        {
+          "heading": "Version-control hygiene",
+          "content": "Satoshi shipped code as zip files and later via SourceForge SVN, scrubbed of any identifying metadata; no compiler paths, usernames, or locale strings ever leaked. The consistency of this operational security over 2+ years is itself a datum.",
+          "source": "Early release archives; community forensic examinations"
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "codename": "CORRESPONDENCE",
+      "title": "The Known Emails & Forum Posts",
+      "summary": "Satoshi's direct interactions: who he wrote to, what he said, and how he left.",
+      "items": [
+        {
+          "heading": "First contact",
+          "content": "Satoshi's earliest known email went to Adam Back in August 2008, asking about Hashcash citation; Back pointed him to Wei Dai's b-money. Satoshi then emailed Dai for the citation, mentioning the paper was nearly complete. The satoshin@gmx.com and satoshi@vistomail.com addresses and the bitcoin.org domain (registered via anonymousspeech.com, Aug 2008) predate the white paper.",
+          "source": "Emails published in COPA v. Wright (2024); Dai's published correspondence; domain records"
+        },
+        {
+          "heading": "The announcement",
+          "content": "On 31 Oct 2008 Satoshi announced the white paper on the metzdowd.com cryptography mailing list. Responses were mostly skeptical; Hal Finney was among the few encouraging voices. Satoshi's replies were patient, technically confident, and occasionally revealed motive: 'The root problem with conventional currency is all the trust that's required to make it work.'",
+          "source": "metzdowd cryptography list archive (Oct–Nov 2008)"
+        },
+        {
+          "heading": "Working relationships",
+          "content": "Satoshi corresponded extensively with Hal Finney (debugging v0.1 in Jan 2009), later with Gavin Andresen, Mike Hearn, and Martti Malmi. Correspondents consistently describe the same persona: methodical, cautious, allergic to personal questions, focused on the work. None report ever hearing a voice, seeing a face, or receiving payment details.",
+          "source": "Published email archives (Hearn, Malmi, Andresen); COPA trial exhibits"
+        },
+        {
+          "heading": "Anonymity discipline",
+          "content": "Satoshi used Tor and anonymity-friendly email providers, never disclosed personal details, deflected all identity questions, and reacted to WikiLeaks donation discussions in Dec 2010 with alarm: 'WikiLeaks has kicked the hornet's nest, and the swarm is headed towards us.'",
+          "source": "bitcointalk.org posts (Dec 2010), public archive"
+        },
+        {
+          "heading": "The exit",
+          "content": "In Dec 2010 Satoshi quietly removed his name from the website, handed the alert key and repository access to Gavin Andresen, and in April 2011 sent final emails saying he had 'moved on to other things' and that the project was 'in good hands'. After Andresen mentioned accepting an invitation to present to the CIA's In-Q-Tel, Satoshi was never heard from again. The 2014 'I am not Dorian Nakamoto' P2P Foundation post is considered by many researchers to be a possible account compromise.",
+          "source": "Andresen's public account; email archives; P2P Foundation forum"
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "codename": "SOCIALGRAPH",
+      "title": "Circumstantial & Social-Graph Links",
+      "summary": "The surrounding world: who was positioned, motivated, and connected.",
+      "items": [
+        {
+          "heading": "The cypherpunk lineage",
+          "content": "Bitcoin synthesizes a 20-year research thread: Chaum's ecash (1983), Back's Hashcash (1997), Dai's b-money (1998), Szabo's bit gold (1998–2005), Finney's RPOW (2004). The white paper's citations and Satoshi's correspondence show he knew this lineage intimately and knew exactly which two people to contact first. The plausible author pool — people with the crypto, the C++, the economics, and the motivation in 2008 — has been estimated by community analysts at a few dozen people worldwide.",
+          "source": "Bitcoin white paper; published correspondence; community analyses"
+        },
+        {
+          "heading": "Financial context",
+          "content": "Bitcoin launched during the 2008 financial crisis; the genesis block's Times headline about bank bailouts reads as deliberate commentary. Satoshi wrote about central-bank trust failures and fractional-reserve banking in terms that echo libertarian and cypherpunk critiques circulating on the mailing lists he used.",
+          "source": "Genesis block; P2P Foundation post (Feb 2009)"
+        },
+        {
+          "heading": "The untouched fortune",
+          "content": "The ~1M BTC attributed to the Patoshi miner has never moved — through price peaks exceeding $60,000+ per coin. No spend, no signature, no message. Every named living candidate has therefore either shown superhuman restraint for 15+ years, lost the keys, or is not Satoshi; the untouched coins are also consistent with a deceased Satoshi.",
+          "source": "Public blockchain record; Lerner's Patoshi analyses"
+        },
+        {
+          "heading": "Denials and non-claims",
+          "content": "Every seriously named living candidate — Szabo, Back, Dai, Dorian Nakamoto — has denied being Satoshi. The one prominent claimant, Craig Wright, was found by the UK High Court in 2024 not to be Satoshi, with the judge finding extensive forgery. Genuine Satoshi candidates, notably, have never sought the title; the person who claimed it was ruled out judicially.",
+          "source": "Candidates' public statements; COPA v. Wright judgment (2024)"
+        },
+        {
+          "heading": "Group-authorship hypotheses",
+          "content": "Some researchers argue the breadth of skills (protocol design, applied crypto, C++ systems engineering, economics, technical writing) plus the flawless operational security suggests more than one person. Others counter that the code's single consistent style, the persona's consistent voice, and the single mining fingerprint point to one individual. No public evidence settles this.",
+          "source": "Public analyses and commentary, 2011–present"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,201 @@
+{
+  "note": "Candidate profiles for the WHO IS SATOSHI? reasoning exercise. Every evidence item is drawn from public, documented sources. Nothing here is an accusation or a claim of identity; several candidates have publicly denied being Satoshi and one has been found by a court NOT to be Satoshi. The 'unknown' entry is permanent and may never be removed.",
+  "candidates": [
+    {
+      "id": "hal-finney",
+      "name": "Hal Finney",
+      "status": "deceased (2014)",
+      "summary": "Cryptographic pioneer, PGP developer, creator of RPOW (Reusable Proofs of Work, 2004), and recipient of the first bitcoin transaction from Satoshi in January 2009. Publicly denied being Satoshi before his death.",
+      "publicEvidence": [
+        {
+          "claim": "Received the first bitcoin transaction (block 170, 12 Jan 2009) and was among the first people to run the Bitcoin software.",
+          "source": "Bitcoin blockchain; Finney's 2013 BitcoinTalk post 'Bitcoin and me'"
+        },
+        {
+          "claim": "Created RPOW (2004), a reusable proof-of-work e-cash system that is a direct conceptual ancestor of Bitcoin.",
+          "source": "rpow.net archive; Finney's published work"
+        },
+        {
+          "claim": "Lived for years in Temple City, California, a few blocks from a man named Dorian Satoshi Nakamoto — a coincidence widely reported in 2014.",
+          "source": "Forbes, 'Nakamoto's Neighbor' (Andy Greenberg, Mar 2014)"
+        },
+        {
+          "claim": "Publicly denied being Satoshi and shared email correspondence he said he had received from Satoshi; a writing-style analysis commissioned by Forbes found his prose differed from Satoshi's.",
+          "source": "Forbes (2014); Finney's own public statements"
+        },
+        {
+          "claim": "Was diagnosed with ALS in 2009 and died in August 2014; his known illness timeline overlaps Satoshi's period of declining activity.",
+          "source": "Public reporting; Finney's 2013 BitcoinTalk post"
+        }
+      ]
+    },
+    {
+      "id": "nick-szabo",
+      "name": "Nick Szabo",
+      "status": "living",
+      "summary": "Computer scientist and legal scholar who designed 'bit gold' (proposed 1998, described publicly 2005), a decentralized digital-money proposal widely regarded as Bitcoin's closest intellectual predecessor. Has repeatedly denied being Satoshi.",
+      "publicEvidence": [
+        {
+          "claim": "Designed bit gold, a decentralized digital currency scheme combining proof-of-work chains and timestamping — the closest published precursor to Bitcoin's design.",
+          "source": "Szabo's blog 'Unenumerated' (2005); academic commentary"
+        },
+        {
+          "claim": "A 2014 stylometric study by Aston University researchers concluded his writing was the closest match to the Bitcoin white paper among candidates studied.",
+          "source": "Aston University Centre for Forensic Linguistics (Dr. Jack Grieve), Apr 2014"
+        },
+        {
+          "claim": "Reportedly backdated blog posts about bit gold from before to after the white paper's release, a detail noted by researchers.",
+          "source": "Public blog archives; New York Times, 'Decoding the Enigma of Satoshi Nakamoto' (Nathaniel Popper, May 2015)"
+        },
+        {
+          "claim": "The Bitcoin white paper does not cite bit gold, despite citing other predecessors such as Hashcash and b-money — noted by analysts as either evasive or exculpatory.",
+          "source": "Bitcoin white paper (2008), reference list"
+        },
+        {
+          "claim": "Has explicitly and repeatedly denied being Satoshi, including in a 2014 email quoted by financial author Dominic Frisby and later public statements.",
+          "source": "Frisby, 'Bitcoin: The Future of Money?' (2014); Szabo's public statements"
+        }
+      ]
+    },
+    {
+      "id": "adam-back",
+      "name": "Adam Back",
+      "status": "living",
+      "summary": "British cryptographer, inventor of Hashcash (1997) — the proof-of-work scheme cited in the Bitcoin white paper — and the first person Satoshi is known to have emailed (August 2008). CEO of Blockstream. Has denied being Satoshi.",
+      "publicEvidence": [
+        {
+          "claim": "Invented Hashcash, one of only a handful of works cited in the Bitcoin white paper; Bitcoin mining is directly built on it.",
+          "source": "Hashcash paper (1997/2002); Bitcoin white paper citation [6]"
+        },
+        {
+          "claim": "Was the recipient of Satoshi's first known outbound email (Aug 2008), in which Satoshi asked about Hashcash and was pointed to Wei Dai's b-money.",
+          "source": "Emails published during the 2024 COPA v. Wright trial"
+        },
+        {
+          "claim": "Is a British cryptographer; Satoshi's writing used British spellings and idioms (e.g. 'bloody hard').",
+          "source": "Satoshi's forum posts and emails, public archives"
+        },
+        {
+          "claim": "Did not participate in Bitcoin's early development or forums during 2009–2010 and says he only re-engaged with Bitcoin around 2013.",
+          "source": "Back's public statements and interviews"
+        },
+        {
+          "claim": "Has publicly and repeatedly denied being Satoshi, including under oath-adjacent scrutiny of his emails in the 2024 COPA trial.",
+          "source": "COPA v. Wright proceedings (2024); Back's public statements"
+        }
+      ]
+    },
+    {
+      "id": "wei-dai",
+      "name": "Wei Dai",
+      "status": "living",
+      "summary": "Cryptographer and creator of b-money (1998), cited as the first reference in the Bitcoin white paper, and author of the widely used Crypto++ library. Satoshi corresponded with him before and after the white paper's release. Has denied being Satoshi.",
+      "publicEvidence": [
+        {
+          "claim": "Proposed b-money (1998), an anonymous distributed electronic cash system, cited as reference [1] in the Bitcoin white paper.",
+          "source": "b-money proposal (weidai.com); Bitcoin white paper"
+        },
+        {
+          "claim": "Received emails from Satoshi in August 2008 (before the white paper's publication) asking for the correct b-money citation.",
+          "source": "Emails published by Dai; LessWrong/Gwern archives"
+        },
+        {
+          "claim": "Author of Crypto++, a major C++ cryptography library — consistent with the skill set evident in Bitcoin's original C++ codebase.",
+          "source": "Crypto++ project history"
+        },
+        {
+          "claim": "Has stated he was not involved in Bitcoin's creation and expressed regret at not engaging more with Satoshi at the time.",
+          "source": "Dai's public comments on LessWrong (2011–2014)"
+        }
+      ]
+    },
+    {
+      "id": "len-sassaman",
+      "name": "Len Sassaman",
+      "status": "deceased (2011)",
+      "summary": "Cypherpunk, privacy researcher at COSIC (KU Leuven, Belgium), maintainer of the Mixmaster anonymous remailer, mentored by David Chaum's school of digital cash research. Died in July 2011, roughly two months after Satoshi's last known private email.",
+      "publicEvidence": [
+        {
+          "claim": "Was a professional applied cryptographer and anonymity-systems engineer active in the cypherpunk community Bitcoin emerged from.",
+          "source": "COSIC KU Leuven records; Mixmaster project history"
+        },
+        {
+          "claim": "Worked in Belgium (CET timezone); some analysts argue Satoshi's activity pattern is consistent with a European schedule kept by a night owl.",
+          "source": "Public timestamp analyses of Satoshi's posts/commits"
+        },
+        {
+          "claim": "Died on 3 July 2011, close in time to Satoshi's final known communications (April 2011), a coincidence popularized in a 2021 essay.",
+          "source": "Leung, 'Len Sassaman and Satoshi' (Medium, 2021)"
+        },
+        {
+          "claim": "Colleagues and his widow, cryptographer Meredith Patterson, consider it unlikely he was Satoshi; Patterson has said he lacked the time and that she saw no evidence of it.",
+          "source": "Meredith Patterson's public statements (2021)"
+        }
+      ]
+    },
+    {
+      "id": "dorian-nakamoto",
+      "name": "Dorian Nakamoto",
+      "status": "living",
+      "summary": "Japanese-American physicist and engineer named 'Satoshi Nakamoto' at birth, identified by a 2014 Newsweek cover story as Bitcoin's creator — an identification he immediately and consistently denied, and which is widely considered mistaken.",
+      "publicEvidence": [
+        {
+          "claim": "His legal birth name is Satoshi Nakamoto, and he worked as a systems engineer on classified defense projects.",
+          "source": "Newsweek, 'The Face Behind Bitcoin' (Leah McGrath Goodman, Mar 2014)"
+        },
+        {
+          "claim": "Lived a few blocks from Hal Finney in Temple City, California.",
+          "source": "Forbes (2014)"
+        },
+        {
+          "claim": "Immediately denied any involvement, saying he had never heard of Bitcoin until his son mentioned the reporter's inquiry, and attributed a misunderstood doorstep quote to confusion about his classified engineering work.",
+          "source": "AP interview (Mar 2014); Nakamoto's public statement"
+        },
+        {
+          "claim": "Hours after the Newsweek story, the dormant P2P Foundation account associated with Satoshi posted: 'I am not Dorian Nakamoto.'",
+          "source": "P2P Foundation forum (9 Mar 2014)"
+        }
+      ]
+    },
+    {
+      "id": "craig-wright",
+      "name": "Craig Wright",
+      "status": "living",
+      "summary": "Australian computer scientist who publicly claimed from 2016 to be Satoshi Nakamoto. In March 2024 the UK High Court ruled, after a full trial, that he is NOT Satoshi and that he lied and forged documents 'extensively and repeatedly'. Included here because the claim was publicly prominent; the judicial finding is itself evidence.",
+      "publicEvidence": [
+        {
+          "claim": "Publicly claimed to be Satoshi beginning in 2016 and provided 'proof' sessions to media and Gavin Andresen; the cryptographic proofs offered publicly were shown to be invalid (a reused signature from an existing blockchain transaction).",
+          "source": "BBC/GQ/Economist coverage (May 2016); public cryptographic analyses"
+        },
+        {
+          "claim": "The UK High Court (COPA v. Wright, Mr Justice Mellor, Mar 2024) declared that Wright is not the author of the white paper, did not create Bitcoin, and forged documents on a large scale.",
+          "source": "COPA v. Wright judgment, [2024] EWHC 1198 (Ch)"
+        },
+        {
+          "claim": "Has never moved or signed with any of the early keys associated with Satoshi's known coins.",
+          "source": "Public blockchain record"
+        }
+      ]
+    },
+    {
+      "id": "unknown",
+      "name": "Unknown / Not Listed",
+      "status": "permanent bucket",
+      "summary": "The possibility that Satoshi Nakamoto is someone not on this list — a private individual who was never publicly suspected, more than one person working together, or a candidate the public record has never surfaced. The honest state of public knowledge is that Satoshi's identity is unconfirmed; this bucket may never drop below 15%.",
+      "publicEvidence": [
+        {
+          "claim": "No candidate has ever produced, and no investigation has ever surfaced, a cryptographic proof (a signature from Satoshi's known keys) tying Satoshi to any named person.",
+          "source": "Public blockchain record; absence of any verified signature since 2011"
+        },
+        {
+          "claim": "Satoshi's ~1 million early-mined bitcoins have never moved, despite enormous financial incentive — consistent with death, lost keys, or extraordinary discipline by an unidentified person.",
+          "source": "Public blockchain analyses of the 'Patoshi' mining pattern (Sergio Demian Lerner)"
+        },
+        {
+          "claim": "Fifteen-plus years of journalistic, academic, and amateur investigation have produced no confirmed identification.",
+          "source": "The public record, 2008–present"
+        }
+      ]
+    }
+  ]
+}
