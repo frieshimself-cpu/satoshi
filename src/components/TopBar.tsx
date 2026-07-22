@@ -1,6 +1,7 @@
 "use client";
 
 import DecryptText from "./DecryptText";
+import TokenBadge from "./TokenBadge";
 
 export default function TopBar({
   releasedCount,
@@ -63,10 +64,20 @@ export default function TopBar({
           </span>
         </div>
 
-        <p className="w-full text-[10.5px] leading-snug text-charcoal-600 sm:text-phosphor-dim/70">
-          The AI reasons only from the evidence shown. It cannot and will not name a single
-          answer — only weigh probabilities. This is a reasoning exercise, not an accusation.
-        </p>
+        <div className="w-full flex flex-wrap items-center gap-x-4 gap-y-1.5">
+          <p className="text-[10.5px] leading-snug text-charcoal-600 sm:text-phosphor-dim/70">
+            The AI reasons only from the evidence shown. It cannot and will not name a single
+            answer — only weigh probabilities. This is a reasoning exercise, not an accusation.
+          </p>
+          <span className="flex items-center gap-2">
+            <TokenBadge />
+            {process.env.NEXT_PUBLIC_TOKEN_CA && (
+              <span className="text-[9px] text-charcoal-600 tracking-widest">
+                NOT FINANCIAL ADVICE
+              </span>
+            )}
+          </span>
+        </div>
       </div>
     </header>
   );

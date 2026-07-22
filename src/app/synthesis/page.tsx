@@ -1,5 +1,6 @@
 import DisclaimerFooter from "@/components/DisclaimerFooter";
 import Leaderboard from "@/components/Leaderboard";
+import TokenBadge from "@/components/TokenBadge";
 import { getCandidates } from "@/lib/data";
 import { getSnapshots, getTranscripts } from "@/lib/db";
 
@@ -67,6 +68,9 @@ export default function SynthesisPage() {
           <p className="text-[11px] text-amber-glow/90 tracking-widest mt-1.5">
             THE QUESTION REMAINS OPEN. THIS IS A WEIGHING OF EVIDENCE, NOT A REVEAL.
           </p>
+          <div className="mt-2">
+            <TokenBadge />
+          </div>
         </div>
       </header>
 

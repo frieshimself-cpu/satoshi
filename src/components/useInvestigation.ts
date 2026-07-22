@@ -24,6 +24,8 @@ export function useInvestigation(): Investigation {
   const [connected, setConnected] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
   const esRef = useRef<EventSource | null>(null);
+  const streamingRef = useRef(false);
+  streamingRef.current = isStreaming;
 
   const refresh = useCallback(async () => {
     try {
@@ -127,8 +129,16 @@ export function useInvestigation(): Investigation {
     void refresh();
     connect();
 
+    // Safety-net poll: if an SSE event is ever missed (proxy hiccup, serverless
+    // instance mismatch), viewers still converge on the DB state. Skipped while
+    // a stream is live locally so tokens aren't clobbered.
+    const poll = setInterval(() => {
+      if (!streamingRef.current) void refresh();
+    }, 20000);
+
     return () => {
       cancelled = true;
+      clearInterval(poll);
       esRef.current?.close();
     };
   }, [refresh]);
