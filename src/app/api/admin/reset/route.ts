@@ -32,8 +32,8 @@ export async function POST(req: Request) {
     );
   }
 
-  resetAll();
-  clearUploads();
+  await resetAll();
+  await clearUploads();
   broadcast({ type: "reset" });
   return NextResponse.json({ ok: true });
 }

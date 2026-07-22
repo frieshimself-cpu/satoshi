@@ -27,8 +27,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: `index must be 1–${dossiers.length}` }, { status: 400 });
   }
 
-  const released = getReleasedIndexes();
-  const isRetry = released.includes(index) && !hasCompleteTranscript("dossier", index);
+  const released = await getReleasedIndexes();
+  const isRetry = released.includes(index) && !(await hasCompleteTranscript("dossier", index));
   const nextExpected = released.length + 1;
 
   // Enforce strict order: only the next unreleased dossier, or a retry of a

@@ -17,7 +17,7 @@ export async function POST() {
   }
 
   // The synthesis is the finale — the board is final after it.
-  if (hasCompleteTranscript("synthesis", null)) {
+  if (await hasCompleteTranscript("synthesis", null)) {
     return NextResponse.json(
       { error: "The synthesis has run; the board is final. Reset to start a new investigation." },
       { status: 409 }
@@ -26,13 +26,15 @@ export async function POST() {
 
   try {
     // A failed community analysis takes precedence: retry it before new batches.
-    const failed = getTranscripts().find((t) => t.kind === "community" && t.status === "error");
+    const failed = (await getTranscripts()).find(
+      (t) => t.kind === "community" && t.status === "error"
+    );
     if (failed && failed.dossierIndex !== null) {
       const snapshot = await retryCommunityBatch(failed.dossierIndex);
       return NextResponse.json({ ok: true, retried: failed.dossierIndex, snapshot });
     }
 
-    const approved = getSubmissions(["approved"]);
+    const approved = await getSubmissions(["approved"]);
     if (!approved.length) {
       return NextResponse.json(
         { error: "No approved submissions waiting for release" },

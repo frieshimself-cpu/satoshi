@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  return NextResponse.json(getAppState(), {
+  return NextResponse.json(await getAppState(), {
     headers: { "Cache-Control": "no-store" },
   });
 }

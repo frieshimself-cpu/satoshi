@@ -26,7 +26,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   return NextResponse.json(
-    { submissions: getSubmissions().map(toAdminView) },
+    { submissions: (await getSubmissions()).map(toAdminView) },
     { headers: { "Cache-Control": "no-store" } }
   );
 }
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const sub = getSubmissions().find((s) => s.id === id);
+  const sub = (await getSubmissions()).find((s) => s.id === id);
   if (!sub) return NextResponse.json({ error: "No such submission" }, { status: 404 });
   if (sub.status === "released") {
     return NextResponse.json(
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
     );
   }
 
-  setSubmissionStatus(
+  await setSubmissionStatus(
     id,
     action === "approve" ? "approved" : "rejected",
     `Operator ${action}d this submission.`

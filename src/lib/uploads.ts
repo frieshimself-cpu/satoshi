@@ -13,7 +13,13 @@ export const ALLOWED_MIMES: Record<string, string> = {
   "image/gif": ".gif",
 };
 
-export function uploadsDir(): string {
+const UPLOAD_PREFIX = "satoshi/uploads/";
+
+function blobToken(): string | undefined {
+  return process.env.BLOB_READ_WRITE_TOKEN;
+}
+
+function localUploadsDir(): string {
   const dir = process.env.VERCEL
     ? "/tmp/satoshi-uploads"
     : path.join(process.cwd(), "data", "uploads");
@@ -21,16 +27,52 @@ export function uploadsDir(): string {
   return dir;
 }
 
-export function saveUpload(buf: Buffer, mime: string): string {
+/**
+ * Persist an uploaded file. Returns a reference usable by every server
+ * instance: a public blob URL in production, a filesystem path locally.
+ */
+export async function saveUpload(buf: Buffer, mime: string): Promise<string> {
   const ext = ALLOWED_MIMES[mime] ?? ".bin";
   const name = `${Date.now()}-${randomBytes(6).toString("hex")}${ext}`;
-  const full = path.join(uploadsDir(), name);
+  if (blobToken()) {
+    const { put } = await import("@vercel/blob");
+    const res = await put(`${UPLOAD_PREFIX}${name}`, buf, {
+      access: "public",
+      token: blobToken(),
+      addRandomSuffix: false,
+      contentType: mime,
+    });
+    return res.url;
+  }
+  const full = path.join(localUploadsDir(), name);
   fs.writeFileSync(full, buf);
   return full;
 }
 
-export function clearUploads(): void {
-  const dir = uploadsDir();
+/** Read back an uploaded file from either a blob URL or a local path. */
+export async function readUpload(ref: string): Promise<Buffer> {
+  if (ref.startsWith("http")) {
+    const res = await fetch(ref, { cache: "no-store" });
+    if (!res.ok) throw new Error(`upload fetch failed: ${res.status}`);
+    return Buffer.from(await res.arrayBuffer());
+  }
+  return fs.readFileSync(ref);
+}
+
+export async function clearUploads(): Promise<void> {
+  if (blobToken()) {
+    try {
+      const { list, del } = await import("@vercel/blob");
+      const res = await list({ prefix: UPLOAD_PREFIX, token: blobToken(), limit: 1000 });
+      if (res.blobs.length) {
+        await del(res.blobs.map((b) => b.url), { token: blobToken() });
+      }
+    } catch (err) {
+      console.error("[uploads] blob cleanup failed:", err);
+    }
+    return;
+  }
+  const dir = localUploadsDir();
   for (const f of fs.readdirSync(dir)) {
     try {
       fs.unlinkSync(path.join(dir, f));

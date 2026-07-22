@@ -1,11 +1,11 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getCandidates, getDossiers, UNKNOWN_FLOOR, UNKNOWN_ID } from "./data";
-import fs from "fs";
 import {
   createCommunityBatch,
   createTranscript,
   deleteFailedTranscripts,
   finishTranscript,
+  flushStreamingBuffer,
   getSnapshots,
   getSubmissionsByBatch,
   getTranscripts,
@@ -13,6 +13,7 @@ import {
   saveSnapshot,
   type SubmissionRow,
 } from "./db";
+import { readUpload } from "./uploads";
 import { appendStreaming, beginStreaming, broadcast, endStreaming, getBus } from "./bus";
 import { renormalize } from "./renormalize";
 import type { Dossier, LeaderboardSnapshot, TranscriptKind } from "./types";
@@ -96,10 +97,10 @@ ${items}`;
  * answered by the stored analysis. File attachments are replayed as text
  * placeholders — they were analyzed in full when their drop went live.
  */
-function buildHistory(): Anthropic.MessageParam[] {
+async function buildHistory(): Promise<Anthropic.MessageParam[]> {
   const dossiers = getDossiers();
   const messages: Anthropic.MessageParam[] = [];
-  const complete = getTranscripts().filter(
+  const complete = (await getTranscripts()).filter(
     (t) => (t.kind === "dossier" || t.kind === "community") && t.status === "complete"
   );
   // Transcript ids are monotonically increasing → chronological order.
@@ -115,7 +116,7 @@ function buildHistory(): Anthropic.MessageParam[] {
         content: `${preamble}A new evidence dossier has just been released to you. Analyze it per your instructions.\n\n${dossierText(d)}`,
       });
     } else {
-      const subs = getSubmissionsByBatch(t.dossierIndex ?? -1);
+      const subs = await getSubmissionsByBatch(t.dossierIndex ?? -1);
       messages.push({
         role: "user",
         content: `${preamble}Community-submitted evidence has been released to you. Analyze it per your instructions.\n\n${communityBatchText(t.dossierIndex ?? 0, subs, true)}`,
@@ -237,11 +238,27 @@ function rehearsalExtraction(kind: TranscriptKind, index: number | null): unknow
 // Pipeline
 // ---------------------------------------------------------------------------
 
+const STREAM_FLUSH_MS = 2500;
+
 async function streamAnalysis(
   messages: Anthropic.MessageParam[],
   kind: TranscriptKind,
   dossierIndex: number | null
 ): Promise<string> {
+  // Periodically flush the live buffer to shared storage so viewers served by
+  // OTHER instances see the text grow via their state poll.
+  let lastFlush = 0;
+  const maybeFlush = async (force = false) => {
+    const now = Date.now();
+    if (!force && now - lastFlush < STREAM_FLUSH_MS) return;
+    lastFlush = now;
+    try {
+      await flushStreamingBuffer(kind, dossierIndex, getBus().streaming.text);
+    } catch (err) {
+      console.error("[analyst] streaming flush failed:", err);
+    }
+  };
+
   if (isRehearsal()) {
     const text = rehearsalAnalysis(kind, dossierIndex);
     // Stream in small chunks to exercise the SSE path.
@@ -250,6 +267,7 @@ async function streamAnalysis(
     for (const chunk of chunks) {
       appendStreaming(chunk);
       broadcast({ type: "token", kind, dossierIndex, text: chunk });
+      await maybeFlush();
       await new Promise((r) => setTimeout(r, 15));
     }
     return text;
@@ -266,6 +284,7 @@ async function streamAnalysis(
     if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
       appendStreaming(event.delta.text);
       broadcast({ type: "token", kind, dossierIndex, text: event.delta.text });
+      await maybeFlush();
     }
   }
   const final = await stream.finalMessage();
@@ -304,7 +323,7 @@ async function extractBoard(
   // renormalize() is total: any garbage in still yields a valid board
   // (sum = 100, Unknown >= floor, every candidate present).
   const normalized = renormalize(raw);
-  const snapshot = saveSnapshot(kind, dossierIndex, normalized);
+  const snapshot = await saveSnapshot(kind, dossierIndex, normalized);
   broadcast({ type: "leaderboard_update", snapshot });
   return snapshot;
 }
@@ -318,7 +337,7 @@ async function runPipeline(
   if (bus.busy) throw new AnalystBusyError();
   bus.busy = true;
 
-  const transcriptId = createTranscript(kind, dossierIndex);
+  const transcriptId = await createTranscript(kind, dossierIndex);
   beginStreaming(kind, dossierIndex);
   if (kind === "dossier" && dossierIndex !== null) {
     broadcast({ type: "dossier_started", dossierIndex });
@@ -330,7 +349,7 @@ async function runPipeline(
 
   try {
     const analysis = await streamAnalysis(messages, kind, dossierIndex);
-    finishTranscript(transcriptId, analysis, "complete");
+    await finishTranscript(transcriptId, analysis, "complete");
     endStreaming();
     if (kind === "dossier" && dossierIndex !== null) {
       broadcast({ type: "dossier_complete", dossierIndex });
@@ -343,7 +362,7 @@ async function runPipeline(
   } catch (err) {
     // Preserve whatever streamed before the failure so nothing is lost,
     // but mark it errored so the admin can retry.
-    finishTranscript(transcriptId, getBus().streaming.text, "error");
+    await finishTranscript(transcriptId, getBus().streaming.text, "error").catch(() => {});
     endStreaming();
     broadcast({
       type: "analysis_error",
@@ -368,10 +387,10 @@ export async function releaseDossier(index: number): Promise<LeaderboardSnapshot
   if (!dossier) throw new Error(`No dossier with index ${index}`);
 
   // A retry after an error re-runs the same index; clear the failed attempt.
-  deleteFailedForRetry("dossier", index);
+  await deleteFailedTranscripts("dossier", index);
 
-  markReleased(index);
-  const history = buildHistory();
+  await markReleased(index);
+  const history = await buildHistory();
   history.push({
     role: "user",
     content: releasePrompt(dossier, history.length === 0),
@@ -389,29 +408,29 @@ export async function releaseCommunityBatch(
 ): Promise<LeaderboardSnapshot> {
   if (getBus().busy) throw new AnalystBusyError();
   if (!submissions.length) throw new Error("No approved submissions to release");
-  const batchId = createCommunityBatch(submissions.map((s) => s.id));
+  const batchId = await createCommunityBatch(submissions.map((s) => s.id));
   return runCommunityPipeline(batchId);
 }
 
 /** Re-run a community batch whose analysis failed mid-stream. */
 export async function retryCommunityBatch(batchId: number): Promise<LeaderboardSnapshot> {
-  deleteFailedTranscripts("community", batchId);
+  await deleteFailedTranscripts("community", batchId);
   return runCommunityPipeline(batchId);
 }
 
 async function runCommunityPipeline(batchId: number): Promise<LeaderboardSnapshot> {
-  const batched = getSubmissionsByBatch(batchId);
+  const batched = await getSubmissionsByBatch(batchId);
   if (!batched.length) throw new Error(`Community batch ${batchId} has no submissions`);
 
-  const history = buildHistory();
+  const history = await buildHistory();
   const preamble = history.length === 0 ? firstMessagePreamble() : "";
 
   // Live turn: text + the actual file attachments (bounded count/size).
   const content: Anthropic.ContentBlockParam[] = [];
   for (const s of batched) {
-    if (!s.file_path || !s.file_mime) continue;
+    if (!s.file_url || !s.file_mime) continue;
     try {
-      const data = fs.readFileSync(s.file_path).toString("base64");
+      const data = (await readUpload(s.file_url)).toString("base64");
       if (s.file_mime === "application/pdf") {
         content.push({
           type: "document",
@@ -437,17 +456,13 @@ async function runCommunityPipeline(batchId: number): Promise<LeaderboardSnapsho
 }
 
 export async function runSynthesis(): Promise<LeaderboardSnapshot> {
-  deleteFailedForRetry("synthesis", null);
-  const history = buildHistory();
+  await deleteFailedTranscripts("synthesis", null);
+  const history = await buildHistory();
   history.push({ role: "user", content: SYNTHESIS_PROMPT });
   return runPipeline("synthesis", null, history);
 }
 
-function deleteFailedForRetry(kind: TranscriptKind, dossierIndex: number | null): void {
-  deleteFailedTranscripts(kind, dossierIndex);
-}
-
-export function latestSnapshot(): LeaderboardSnapshot | null {
-  const all = getSnapshots();
+export async function latestSnapshot(): Promise<LeaderboardSnapshot | null> {
+  const all = await getSnapshots();
   return all.length ? all[all.length - 1] : null;
 }

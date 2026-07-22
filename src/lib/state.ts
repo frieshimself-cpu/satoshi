@@ -4,17 +4,18 @@ import {
   getCommunityBatches,
   getReleaseTimes,
   getReleasedIndexes,
+  getSharedStreaming,
   getSnapshots,
   getSubmissionsByBatch,
   getTranscripts,
 } from "./db";
 import type { AppState, CommunityBatch, PublicDossier } from "./types";
 
-export function getAppState(): AppState {
-  const releasedTimes = getReleaseTimes();
-  const released = new Set(getReleasedIndexes());
+export async function getAppState(): Promise<AppState> {
+  const releasedTimes = await getReleaseTimes();
+  const released = new Set(await getReleasedIndexes());
   const dossiers = getDossiers();
-  const transcripts = getTranscripts();
+  const transcripts = await getTranscripts();
   const bus = getBus();
 
   const publicDossiers: PublicDossier[] = dossiers.map((d) =>
@@ -27,25 +28,48 @@ export function getAppState(): AppState {
     (t) => t.kind === "synthesis" && t.status === "complete"
   );
 
-  const communityBatches: CommunityBatch[] = getCommunityBatches().map((b) => ({
-    id: b.id,
-    releasedAt: b.released_at,
-    submissions: getSubmissionsByBatch(b.id).map((s) => ({
-      claim: s.claim,
-      sourceUrl: s.source_url,
-      context: s.context,
-      fileName: s.file_name,
-      screenerSummary: s.screener_summary,
-    })),
-  }));
+  const communityBatches: CommunityBatch[] = [];
+  for (const b of await getCommunityBatches()) {
+    communityBatches.push({
+      id: b.id,
+      releasedAt: b.released_at,
+      submissions: (await getSubmissionsByBatch(b.id)).map((s) => ({
+        claim: s.claim,
+        sourceUrl: s.source_url,
+        context: s.context,
+        fileName: s.file_name,
+        screenerSummary: s.screener_summary,
+      })),
+    });
+  }
+
+  // Streaming: the instance running the analysis has the authoritative live
+  // buffer in memory; every other instance serves the shared flushed copy.
+  let streaming = { ...bus.streaming };
+  if (!streaming.active) {
+    const shared = await getSharedStreaming();
+    // Ignore stale buffers (e.g. instance died mid-flush > 3 min ago).
+    if (
+      shared.active &&
+      shared.updatedAt &&
+      Date.now() - new Date(shared.updatedAt).getTime() < 3 * 60 * 1000
+    ) {
+      streaming = {
+        active: true,
+        kind: shared.kind as AppState["streaming"]["kind"],
+        dossierIndex: shared.dossierIndex,
+        text: shared.text,
+      };
+    }
+  }
 
   return {
     communityBatches,
     candidates: getCandidates(),
     dossiers: publicDossiers,
     transcripts,
-    snapshots: getSnapshots(),
-    streaming: { ...bus.streaming },
+    snapshots: await getSnapshots(),
+    streaming,
     synthesis: {
       triggered: !!synthesisTranscript,
       content: synthesisTranscript?.content ?? null,

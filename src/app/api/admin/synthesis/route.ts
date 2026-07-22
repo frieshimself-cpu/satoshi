@@ -14,7 +14,7 @@ export async function POST() {
   }
 
   const total = getDossiers().length;
-  const released = getReleasedIndexes();
+  const released = await getReleasedIndexes();
   if (released.length < total) {
     return NextResponse.json(
       { error: `Synthesis requires all ${total} dossiers released (currently ${released.length})` },
@@ -22,14 +22,14 @@ export async function POST() {
     );
   }
   for (let i = 1; i <= total; i++) {
-    if (!hasCompleteTranscript("dossier", i)) {
+    if (!(await hasCompleteTranscript("dossier", i))) {
       return NextResponse.json(
         { error: `Dossier ${i} has no completed analysis — retry it first` },
         { status: 409 }
       );
     }
   }
-  if (hasCompleteTranscript("synthesis", null)) {
+  if (await hasCompleteTranscript("synthesis", null)) {
     return NextResponse.json({ error: "Synthesis already completed" }, { status: 409 });
   }
 

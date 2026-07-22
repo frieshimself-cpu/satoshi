@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const unreleased = getSubmissions(["approved", "review", "pending"]).length;
+  const unreleased = (await getSubmissions(["approved", "review", "pending"])).length;
   if (unreleased >= MAX_UNRELEASED) {
     return NextResponse.json(
       { error: "The submission queue is full. Try again after the next evidence drop." },
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
   let claim = "";
   let sourceUrl = "";
   let context = "";
-  let filePath: string | null = null;
+  let fileUrl: string | null = null;
   let fileName: string | null = null;
   let fileMime: string | null = null;
 
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
         );
       }
       const buf = Buffer.from(await file.arrayBuffer());
-      filePath = saveUpload(buf, file.type);
+      fileUrl = await saveUpload(buf, file.type);
       fileName = file.name.slice(0, 120);
       fileMime = file.type;
     }
@@ -92,7 +92,7 @@ export async function POST(req: Request) {
   // AI vetting: approve / reject / hold for operator review.
   let verdict;
   try {
-    verdict = await screenSubmission({ claim, sourceUrl, context, filePath, fileMime });
+    verdict = await screenSubmission({ claim, sourceUrl, context, fileUrl, fileMime });
   } catch (err) {
     console.error("[submit] screener failed:", err);
     // Screener unavailable → never auto-publish; hold for the operator.
@@ -103,11 +103,11 @@ export async function POST(req: Request) {
     };
   }
 
-  const id = insertSubmission({
+  const id = await insertSubmission({
     claim,
     sourceUrl,
     context,
-    filePath,
+    fileUrl,
     fileName,
     fileMime,
     status:

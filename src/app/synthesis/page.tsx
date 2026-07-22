@@ -30,10 +30,10 @@ const KNOWING_ITEMS = [
   },
 ];
 
-export default function SynthesisPage() {
-  const transcripts = getTranscripts();
+export default async function SynthesisPage() {
+  const transcripts = await getTranscripts();
   const synthesis = transcripts.find((t) => t.kind === "synthesis" && t.status === "complete");
-  const snapshots = getSnapshots();
+  const snapshots = await getSnapshots();
   const candidates = getCandidates();
 
   if (!synthesis) {

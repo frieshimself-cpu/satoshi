@@ -24,8 +24,8 @@ export function useInvestigation(): Investigation {
   const [connected, setConnected] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
   const esRef = useRef<EventSource | null>(null);
-  const streamingRef = useRef(false);
-  streamingRef.current = isStreaming;
+  const liveTextLenRef = useRef(0);
+  liveTextLenRef.current = liveText.length;
 
   const refresh = useCallback(async () => {
     try {
@@ -33,12 +33,16 @@ export function useInvestigation(): Investigation {
       if (!res.ok) return;
       const s: AppState = await res.json();
       setState(s);
-      // Replay a mid-flight stream after refresh/reconnect.
+      // Replay / advance a mid-flight stream after refresh, reconnect, or
+      // poll. Only move the text forward — never truncate what SSE tokens
+      // already delivered locally.
       if (s.streaming.active) {
         setIsStreaming(true);
         setLiveKind(s.streaming.kind);
         setLiveDossierIndex(s.streaming.dossierIndex);
-        setLiveText(s.streaming.text);
+        if (s.streaming.text.length >= liveTextLenRef.current) {
+          setLiveText(s.streaming.text);
+        }
       } else {
         setIsStreaming(false);
       }
@@ -129,12 +133,12 @@ export function useInvestigation(): Investigation {
     void refresh();
     connect();
 
-    // Safety-net poll: if an SSE event is ever missed (proxy hiccup, serverless
-    // instance mismatch), viewers still converge on the DB state. Skipped while
-    // a stream is live locally so tokens aren't clobbered.
+    // Primary fallback path on serverless: SSE only reaches viewers on the
+    // instance running the analysis, so everyone else follows along via this
+    // poll (the refresh only ever advances the live text, never truncates it).
     const poll = setInterval(() => {
-      if (!streamingRef.current) void refresh();
-    }, 20000);
+      void refresh();
+    }, 5000);
 
     return () => {
       cancelled = true;
