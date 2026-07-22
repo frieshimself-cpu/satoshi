@@ -60,7 +60,7 @@ export default function ReasoningPane({
 }: {
   transcripts: Transcript[];
   liveText: string;
-  liveKind: "dossier" | "synthesis" | null;
+  liveKind: "dossier" | "community" | "synthesis" | null;
   liveDossierIndex: number | null;
   isStreaming: boolean;
   lastError: string | null;
@@ -85,9 +85,11 @@ export default function ReasoningPane({
   const liveTitle =
     liveKind === "synthesis"
       ? "CLOSING SYNTHESIS"
-      : liveDossierIndex !== null
-        ? `ANALYSIS — DOSSIER ${liveDossierIndex}`
-        : "ANALYSIS";
+      : liveKind === "community"
+        ? `ANALYSIS — COMMUNITY DROP #${liveDossierIndex ?? ""}`
+        : liveDossierIndex !== null
+          ? `ANALYSIS — DOSSIER ${liveDossierIndex}`
+          : "ANALYSIS";
 
   return (
     <div className="panel flex flex-col h-full min-h-0">
@@ -133,7 +135,9 @@ export default function ReasoningPane({
             title={
               t.kind === "synthesis"
                 ? "CLOSING SYNTHESIS"
-                : `ANALYSIS — DOSSIER ${t.dossierIndex}`
+                : t.kind === "community"
+                  ? `ANALYSIS — COMMUNITY DROP #${t.dossierIndex}`
+                  : `ANALYSIS — DOSSIER ${t.dossierIndex}`
             }
             content={t.content}
             status={t.status}

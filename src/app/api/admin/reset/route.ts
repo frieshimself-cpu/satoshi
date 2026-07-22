@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isAuthed } from "@/lib/auth";
 import { broadcast, getBus } from "@/lib/bus";
 import { resetAll } from "@/lib/db";
+import { clearUploads } from "@/lib/uploads";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,6 +33,7 @@ export async function POST(req: Request) {
   }
 
   resetAll();
+  clearUploads();
   broadcast({ type: "reset" });
   return NextResponse.json({ ok: true });
 }

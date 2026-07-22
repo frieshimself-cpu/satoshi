@@ -64,7 +64,7 @@ export default function Dashboard() {
         {/* Desktop: 3 columns. Center column sized to crop well at 9:16. */}
         <div className="hidden lg:grid grid-cols-[minmax(280px,1fr)_minmax(380px,1.2fr)_minmax(340px,1.1fr)] gap-4 h-[calc(100vh-190px)]">
           <div className="overflow-y-auto pr-1">
-            <DossierFeed dossiers={s.dossiers} />
+            <DossierFeed dossiers={s.dossiers} communityBatches={s.communityBatches} />
           </div>
           <ReasoningPane
             transcripts={s.transcripts}
@@ -81,7 +81,7 @@ export default function Dashboard() {
         <div className="lg:hidden h-[calc(100vh-230px)]">
           {tab === "dossiers" && (
             <div className="h-full overflow-y-auto">
-              <DossierFeed dossiers={s.dossiers} />
+              <DossierFeed dossiers={s.dossiers} communityBatches={s.communityBatches} />
             </div>
           )}
           {tab === "reasoning" && (

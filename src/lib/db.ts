@@ -40,6 +40,25 @@ function createDb(): Database.Database {
       payload TEXT NOT NULL,
       created_at TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS submissions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      claim TEXT NOT NULL,
+      source_url TEXT NOT NULL DEFAULT '',
+      context TEXT NOT NULL DEFAULT '',
+      file_path TEXT,
+      file_name TEXT,
+      file_mime TEXT,
+      status TEXT NOT NULL,
+      verdict_reason TEXT NOT NULL DEFAULT '',
+      screener_summary TEXT NOT NULL DEFAULT '',
+      batch_id INTEGER,
+      ip_hash TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS community_batches (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      released_at TEXT NOT NULL
+    );
   `);
   return db;
 }
@@ -171,9 +190,110 @@ export function saveSnapshot(
   return rowToSnapshot(row);
 }
 
+// ---------- submissions ----------
+
+export interface SubmissionRow {
+  id: number;
+  claim: string;
+  source_url: string;
+  context: string;
+  file_path: string | null;
+  file_name: string | null;
+  file_mime: string | null;
+  status: string;
+  verdict_reason: string;
+  screener_summary: string;
+  batch_id: number | null;
+  ip_hash: string;
+  created_at: string;
+}
+
+export function insertSubmission(s: {
+  claim: string;
+  sourceUrl: string;
+  context: string;
+  filePath: string | null;
+  fileName: string | null;
+  fileMime: string | null;
+  status: string;
+  verdictReason: string;
+  screenerSummary: string;
+  ipHash: string;
+}): number {
+  const res = getDb()
+    .prepare(
+      `INSERT INTO submissions
+        (claim, source_url, context, file_path, file_name, file_mime,
+         status, verdict_reason, screener_summary, ip_hash, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+    .run(
+      s.claim,
+      s.sourceUrl,
+      s.context,
+      s.filePath,
+      s.fileName,
+      s.fileMime,
+      s.status,
+      s.verdictReason,
+      s.screenerSummary,
+      s.ipHash,
+      new Date().toISOString()
+    );
+  return Number(res.lastInsertRowid);
+}
+
+export function getSubmissions(statuses?: string[]): SubmissionRow[] {
+  if (statuses && statuses.length) {
+    const marks = statuses.map(() => "?").join(",");
+    return getDb()
+      .prepare(`SELECT * FROM submissions WHERE status IN (${marks}) ORDER BY id`)
+      .all(...statuses) as SubmissionRow[];
+  }
+  return getDb().prepare("SELECT * FROM submissions ORDER BY id").all() as SubmissionRow[];
+}
+
+export function getSubmissionsByBatch(batchId: number): SubmissionRow[] {
+  return getDb()
+    .prepare("SELECT * FROM submissions WHERE batch_id = ? ORDER BY id")
+    .all(batchId) as SubmissionRow[];
+}
+
+export function setSubmissionStatus(id: number, status: string, verdictReason?: string): boolean {
+  const res =
+    verdictReason !== undefined
+      ? getDb()
+          .prepare("UPDATE submissions SET status = ?, verdict_reason = ? WHERE id = ?")
+          .run(status, verdictReason, id)
+      : getDb().prepare("UPDATE submissions SET status = ? WHERE id = ?").run(status, id);
+  return res.changes > 0;
+}
+
+export function createCommunityBatch(submissionIds: number[]): number {
+  const db = getDb();
+  const tx = db.transaction(() => {
+    const res = db
+      .prepare("INSERT INTO community_batches (released_at) VALUES (?)")
+      .run(new Date().toISOString());
+    const batchId = Number(res.lastInsertRowid);
+    const upd = db.prepare("UPDATE submissions SET status = 'released', batch_id = ? WHERE id = ?");
+    for (const id of submissionIds) upd.run(batchId, id);
+    return batchId;
+  });
+  return tx();
+}
+
+export function getCommunityBatches(): { id: number; released_at: string }[] {
+  return getDb()
+    .prepare("SELECT * FROM community_batches ORDER BY id")
+    .all() as { id: number; released_at: string }[];
+}
+
 // ---------- reset ----------
 
 export function resetAll(): void {
   const db = getDb();
-  db.exec("DELETE FROM releases; DELETE FROM transcripts; DELETE FROM snapshots;");
+  db.exec(
+    "DELETE FROM releases; DELETE FROM transcripts; DELETE FROM snapshots; DELETE FROM submissions; DELETE FROM community_batches;"
+  );
 }

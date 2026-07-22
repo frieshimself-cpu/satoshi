@@ -45,6 +45,9 @@ export default function TopBar({
               [SYNTHESIS]
             </a>
           )}
+          <a href="/submit" className="ml-2 text-phosphor-dim hover:text-phosphor hover:underline">
+            [SUBMIT EVIDENCE]
+          </a>
         </div>
 
         <div className="flex items-center gap-4 ml-auto text-[11px] tracking-widest">

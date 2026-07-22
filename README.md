@@ -29,6 +29,12 @@ If you're contributing: do not edit the system prompt's ABSOLUTE RULES, do not r
 the renormalization floor, and do not add evidence to `data/*.json` that isn't publicly
 documented with a source.
 
+These rules extend to **community submissions** (see below): every submission passes an
+AI screener enforcing the same standards (public, sourced, non-defamatory, no private
+information, no prompt injection) before it can ever reach the analyst, borderline cases
+require human approval, and the analyst is instructed to treat all submissions as
+untrusted data whose unverifiable claims move the board little or not at all.
+
 ## Stack
 
 - Next.js 14 (App Router) + TypeScript + Tailwind CSS
@@ -47,8 +53,39 @@ npm run dev                  # http://localhost:3000
 Pages:
 
 - `/` — public live dashboard (dossier feed · live reasoning · probability board)
-- `/admin` — password-gated control room (release, synthesis, reset, live preview)
+- `/submit` — public evidence submission form (AI-screened)
+- `/admin` — password-gated control room (release, synthesis, community drops,
+  review queue, reset, live preview)
 - `/synthesis` — hidden until the synthesis is triggered
+
+## Community evidence submissions
+
+Anyone can submit evidence at `/submit`: a claim (required), a public source, optional
+context, and an optional PDF/image attachment (public material only, max 4 MB).
+
+Pipeline:
+
+1. **AI screening (synchronous).** Each submission is reviewed by a Claude screener
+   against the editorial rules. Verdicts: `approve` (enters the pool), `reject`
+   (with reason, shown to the submitter), or `review` (held for the operator). If the
+   screener is unreachable or returns garbage, the submission is **held for review** —
+   nothing is ever auto-published on failure. Per-IP rate limit: 5/hour.
+2. **Operator queue.** `/admin` shows held submissions with the screener's reasoning
+   (approve/reject buttons), plus the approved pool — any approved item can be pulled
+   before release.
+3. **Community drop.** "RELEASE COMMUNITY DROP" batches all approved submissions into
+   one evidence release that runs through the exact same live pipeline as a dossier:
+   streamed analysis (attachments included as PDF/image blocks), extraction,
+   renormalization (sum = 100, Unknown ≥ 15% — enforced in code), animated board
+   update. Drops can happen at any point before the synthesis; after the synthesis the
+   board is final and community releases are refused.
+
+Injection/abuse posture: submissions are wrapped as untrusted data in both the
+screener and analyst prompts; the analyst can only assign probability to the fixed
+candidate list plus Unknown (a claim about an unlisted person can only feed the
+Unknown bucket); and the code-level floor holds regardless of what any submission
+says. Uploaded files are stored outside the web root, size- and type-restricted, and
+deleted on reset.
 
 ## Run of show
 
@@ -63,20 +100,27 @@ Pages:
    - streams the analysis live to every open dashboard (~1–2 min each),
    - then animates the leaderboard to the new snapshot.
    Let each analysis fully land (status returns to STANDBY) before the next drop.
-3. **The finale** — click **TRIGGER SYNTHESIS**. This produces the closing reasoning
-   (explicitly not a reveal) and unlocks `/synthesis`.
-4. **If a stream dies mid-analysis** — the dashboard shows "SIGNAL LOST — resuming...",
-   the partial transcript is preserved, and `/admin` shows a **RETRY DOSSIER N**
-   button. Click it; the failed attempt is discarded and re-run. No transcript from
-   completed dossiers is ever lost.
+3. **Community drops (optional, any time before the finale)** — when the approved
+   pool has material worth airing, click **RELEASE COMMUNITY DROP**. Check the review
+   queue between dossiers; approve or reject held submissions as they come in.
+4. **The finale** — click **TRIGGER SYNTHESIS**. This produces the closing reasoning
+   (explicitly not a reveal) and unlocks `/synthesis`. Community drops are disabled
+   from this point on.
+5. **If a stream dies mid-analysis** — the dashboard shows "SIGNAL LOST — resuming...",
+   the partial transcript is preserved, and `/admin` shows a retry button (for the
+   failed dossier or community drop). Click it; the failed attempt is discarded and
+   re-run. No transcript from completed releases is ever lost.
 
 ### Rehearsal
 
 Set `REHEARSAL_MODE=1` in `.env.local` and restart. The full pipeline runs with a
-deterministic simulated analyst — zero API calls, zero cost — so you can practice the
-entire run of show, watch the bars animate, and test reset/retry. The admin header
-shows a pulsing "REHEARSAL MODE" badge so you can't confuse it with the live show.
-**Reset and set `REHEARSAL_MODE=0` before going live.**
+deterministic simulated analyst and screener — zero API calls, zero cost — so you can
+practice the entire run of show, watch the bars animate, and test reset/retry. The
+simulated screener approves everything except submissions containing the markers
+`SIM-REJECT` (rejected) or `SIM-REVIEW` (held for review), so all three submission
+paths can be rehearsed. The admin header shows a pulsing "REHEARSAL MODE" badge so you
+can't confuse it with the live show. **Reset and set `REHEARSAL_MODE=0` before going
+live.**
 
 ### Reset workflow
 

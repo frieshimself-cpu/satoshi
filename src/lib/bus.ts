@@ -28,7 +28,10 @@ export function broadcast(event: BusEvent): void {
   getBus().emitter.emit("event", event);
 }
 
-export function beginStreaming(kind: "dossier" | "synthesis", dossierIndex: number | null): void {
+export function beginStreaming(
+  kind: "dossier" | "community" | "synthesis",
+  dossierIndex: number | null
+): void {
   const bus = getBus();
   bus.streaming = { active: true, kind, dossierIndex, text: "" };
 }

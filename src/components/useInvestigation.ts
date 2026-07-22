@@ -7,7 +7,7 @@ export interface Investigation {
   state: AppState | null;
   /** Text of the analysis currently streaming (replayed + live tokens). */
   liveText: string;
-  liveKind: "dossier" | "synthesis" | null;
+  liveKind: "dossier" | "community" | "synthesis" | null;
   liveDossierIndex: number | null;
   isStreaming: boolean;
   connected: boolean;
@@ -18,7 +18,7 @@ export interface Investigation {
 export function useInvestigation(): Investigation {
   const [state, setState] = useState<AppState | null>(null);
   const [liveText, setLiveText] = useState("");
-  const [liveKind, setLiveKind] = useState<"dossier" | "synthesis" | null>(null);
+  const [liveKind, setLiveKind] = useState<"dossier" | "community" | "synthesis" | null>(null);
   const [liveDossierIndex, setLiveDossierIndex] = useState<number | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [connected, setConnected] = useState(false);
@@ -76,6 +76,15 @@ export function useInvestigation(): Investigation {
         void refresh();
       });
 
+      es.addEventListener("community_started", (e) => {
+        const d = JSON.parse((e as MessageEvent).data);
+        setIsStreaming(true);
+        setLiveKind("community");
+        setLiveDossierIndex(d.batchId);
+        setLiveText("");
+        void refresh();
+      });
+
       es.addEventListener("synthesis_started", () => {
         setIsStreaming(true);
         setLiveKind("synthesis");
@@ -88,6 +97,7 @@ export function useInvestigation(): Investigation {
         void refresh();
       };
       es.addEventListener("dossier_complete", onComplete);
+      es.addEventListener("community_complete", onComplete);
       es.addEventListener("synthesis_complete", onComplete);
       es.addEventListener("leaderboard_update", onComplete);
 

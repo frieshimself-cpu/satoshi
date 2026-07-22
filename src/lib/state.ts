@@ -1,7 +1,14 @@
 import { getBus } from "./bus";
 import { getCandidates, getDossiers } from "./data";
-import { getReleaseTimes, getReleasedIndexes, getSnapshots, getTranscripts } from "./db";
-import type { AppState, PublicDossier } from "./types";
+import {
+  getCommunityBatches,
+  getReleaseTimes,
+  getReleasedIndexes,
+  getSnapshots,
+  getSubmissionsByBatch,
+  getTranscripts,
+} from "./db";
+import type { AppState, CommunityBatch, PublicDossier } from "./types";
 
 export function getAppState(): AppState {
   const releasedTimes = getReleaseTimes();
@@ -20,7 +27,20 @@ export function getAppState(): AppState {
     (t) => t.kind === "synthesis" && t.status === "complete"
   );
 
+  const communityBatches: CommunityBatch[] = getCommunityBatches().map((b) => ({
+    id: b.id,
+    releasedAt: b.released_at,
+    submissions: getSubmissionsByBatch(b.id).map((s) => ({
+      claim: s.claim,
+      sourceUrl: s.source_url,
+      context: s.context,
+      fileName: s.file_name,
+      screenerSummary: s.screener_summary,
+    })),
+  }));
+
   return {
+    communityBatches,
     candidates: getCandidates(),
     dossiers: publicDossiers,
     transcripts,

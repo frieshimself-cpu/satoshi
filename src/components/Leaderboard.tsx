@@ -43,7 +43,9 @@ export default function Leaderboard({
           {latest
             ? latest.afterKind === "synthesis"
               ? "FINAL"
-              : `AFTER DOSSIER ${latest.dossierIndex}`
+              : latest.afterKind === "community"
+                ? `AFTER COMMUNITY DROP #${latest.dossierIndex}`
+                : `AFTER DOSSIER ${latest.dossierIndex}`
             : "AWAITING EVIDENCE"}
         </span>
       </div>

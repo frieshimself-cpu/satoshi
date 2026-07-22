@@ -1,9 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useInvestigation } from "./useInvestigation";
 import Leaderboard from "./Leaderboard";
+
+interface AdminSubmission {
+  id: number;
+  claim: string;
+  sourceUrl: string;
+  context: string;
+  fileName: string | null;
+  fileMime: string | null;
+  status: string;
+  verdictReason: string;
+  screenerSummary: string;
+  batchId: number | null;
+  createdAt: string;
+}
 
 export default function AdminControl({ rehearsalMode }: { rehearsalMode: boolean }) {
   const inv = useInvestigation();
@@ -12,6 +26,34 @@ export default function AdminControl({ rehearsalMode }: { rehearsalMode: boolean
   const [message, setMessage] = useState<string | null>(null);
   const [confirmRelease, setConfirmRelease] = useState<number | null>(null);
   const [resetStage, setResetStage] = useState(0);
+  const [subs, setSubs] = useState<AdminSubmission[]>([]);
+
+  const refreshSubs = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/submissions", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setSubs(data.submissions ?? []);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshSubs();
+    const id = setInterval(refreshSubs, 10000);
+    return () => clearInterval(id);
+  }, [refreshSubs]);
+
+  const moderate = async (id: number, action: "approve" | "reject") => {
+    await fetch("/api/admin/submissions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, action }),
+    });
+    await refreshSubs();
+  };
 
   const call = async (label: string, url: string, body?: unknown) => {
     setBusyAction(label);
@@ -29,6 +71,7 @@ export default function AdminControl({ rehearsalMode }: { rehearsalMode: boolean
         setMessage(`✓ ${label} complete`);
       }
       await inv.refresh();
+      await refreshSubs();
     } catch {
       setMessage(`✗ ${label} — network error (stream may still be running; watch the preview)`);
     } finally {
@@ -54,6 +97,12 @@ export default function AdminControl({ rehearsalMode }: { rehearsalMode: boolean
   const retryIndex = failedDossier?.dossierIndex ?? null;
   const allReleased = s.releasedCount >= s.totalDossiers;
   const busy = busyAction !== null || inv.isStreaming;
+
+  const reviewQueue = subs.filter((x) => x.status === "review");
+  const approvedPool = subs.filter((x) => x.status === "approved");
+  const failedCommunity = s.transcripts.some(
+    (t) => t.kind === "community" && t.status === "error"
+  );
 
   return (
     <main className="min-h-screen pb-10">
@@ -170,6 +219,89 @@ export default function AdminControl({ rehearsalMode }: { rehearsalMode: boolean
               The finale. A closing argument with a final board — explicitly NOT a reveal.
               Unlocks /synthesis. Requires all {s.totalDossiers} dossiers analyzed.
             </div>
+          </section>
+
+          <section className="panel p-4 space-y-3">
+            <h2 className="text-[11px] tracking-[0.25em] text-phosphor-dim uppercase">
+              Community evidence
+            </h2>
+            <button
+              disabled={busy || s.synthesis.triggered || (approvedPool.length === 0 && !failedCommunity)}
+              onClick={() => call("Community release", "/api/admin/community-release")}
+              className="w-full border border-phosphor-dim text-phosphor tracking-[0.2em] text-xs py-3 hover:bg-phosphor-faint/40 disabled:opacity-40"
+            >
+              {failedCommunity
+                ? "⟳ RETRY COMMUNITY DROP (stream failed)"
+                : `► RELEASE COMMUNITY DROP (${approvedPool.length} approved)`}
+            </button>
+            <div className="text-[10px] text-charcoal-600 leading-relaxed">
+              Batches all screener-approved submissions into one live evidence drop. Disabled
+              after the synthesis (the board is final).
+            </div>
+
+            {reviewQueue.length > 0 && (
+              <div className="space-y-2 pt-1">
+                <div className="text-[10px] tracking-[0.25em] text-amber-glow">
+                  HELD FOR REVIEW ({reviewQueue.length})
+                </div>
+                {reviewQueue.map((sub) => (
+                  <div key={sub.id} className="border border-amber-dim/40 p-2 space-y-1.5">
+                    <p className="text-[11px] leading-relaxed text-[#a8d8b4]">{sub.claim}</p>
+                    {sub.sourceUrl && (
+                      <p className="text-[10px] text-charcoal-600 break-all">
+                        SOURCE: {sub.sourceUrl}
+                      </p>
+                    )}
+                    {sub.fileName && (
+                      <p className="text-[10px] text-charcoal-600">FILE: {sub.fileName}</p>
+                    )}
+                    <p className="text-[10px] text-amber-glow/70">
+                      SCREENER: {sub.verdictReason}
+                    </p>
+                    <div className="flex gap-2 pt-0.5">
+                      <button
+                        onClick={() => moderate(sub.id, "approve")}
+                        className="flex-1 border border-phosphor-dim text-phosphor text-[10px] tracking-widest py-1.5 hover:bg-phosphor-faint/40"
+                      >
+                        APPROVE
+                      </button>
+                      <button
+                        onClick={() => moderate(sub.id, "reject")}
+                        className="flex-1 border border-alert/50 text-alert text-[10px] tracking-widest py-1.5 hover:bg-alert/10"
+                      >
+                        REJECT
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {approvedPool.length > 0 && (
+              <div className="space-y-2 pt-1">
+                <div className="text-[10px] tracking-[0.25em] text-phosphor-dim">
+                  APPROVED — AWAITING DROP ({approvedPool.length})
+                </div>
+                {approvedPool.map((sub) => (
+                  <div key={sub.id} className="border border-charcoal-700 p-2 space-y-1">
+                    <p className="text-[11px] leading-relaxed text-[#a8d8b4]">
+                      {sub.screenerSummary || sub.claim}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-charcoal-600">
+                        {sub.fileName ? `FILE: ${sub.fileName}` : "no attachment"}
+                      </span>
+                      <button
+                        onClick={() => moderate(sub.id, "reject")}
+                        className="text-[10px] tracking-widest text-charcoal-600 hover:text-alert"
+                      >
+                        [PULL]
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
 
           <section className="panel p-4 space-y-3">

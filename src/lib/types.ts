@@ -35,17 +35,58 @@ export type PublicDossier =
       title: "SEALED";
     };
 
-export type TranscriptKind = "dossier" | "synthesis";
+export type TranscriptKind = "dossier" | "community" | "synthesis";
 export type TranscriptStatus = "streaming" | "complete" | "error";
 
 export interface Transcript {
   id: number;
   kind: TranscriptKind;
+  /** Dossier index for kind "dossier"; community batch id for kind "community". */
   dossierIndex: number | null;
   content: string;
   status: TranscriptStatus;
   startedAt: string;
   completedAt: string | null;
+}
+
+// ---------- community submissions ----------
+
+export type SubmissionStatus =
+  | "pending" // not yet screened (transient)
+  | "approved" // screener (or operator) approved; awaiting release
+  | "review" // screener unsure; operator must decide
+  | "rejected" // screener or operator rejected
+  | "released"; // included in a released community batch
+
+export interface Submission {
+  id: number;
+  claim: string;
+  sourceUrl: string;
+  context: string;
+  fileName: string | null;
+  fileMime: string | null;
+  status: SubmissionStatus;
+  /** Screener's one-line reason for its verdict. */
+  verdictReason: string;
+  /** Screener's neutral restatement used in the evidence drop. */
+  screenerSummary: string;
+  batchId: number | null;
+  createdAt: string;
+}
+
+/** Public projection of a released submission (no file bytes, no metadata). */
+export interface PublicSubmission {
+  claim: string;
+  sourceUrl: string;
+  context: string;
+  fileName: string | null;
+  screenerSummary: string;
+}
+
+export interface CommunityBatch {
+  id: number;
+  releasedAt: string;
+  submissions: PublicSubmission[];
 }
 
 export interface CandidateProbability {
@@ -81,12 +122,16 @@ export interface AppState {
   synthesis: { triggered: boolean; content: string | null };
   releasedCount: number;
   totalDossiers: number;
+  /** Released community evidence drops (public projection). */
+  communityBatches: CommunityBatch[];
 }
 
 export type BusEvent =
   | { type: "token"; kind: TranscriptKind; dossierIndex: number | null; text: string }
   | { type: "dossier_started"; dossierIndex: number }
   | { type: "dossier_complete"; dossierIndex: number }
+  | { type: "community_started"; batchId: number }
+  | { type: "community_complete"; batchId: number }
   | { type: "synthesis_started" }
   | { type: "synthesis_complete" }
   | { type: "leaderboard_update"; snapshot: LeaderboardSnapshot }
