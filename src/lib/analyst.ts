@@ -238,7 +238,7 @@ function rehearsalExtraction(kind: TranscriptKind, index: number | null): unknow
 // Pipeline
 // ---------------------------------------------------------------------------
 
-const STREAM_FLUSH_MS = 2500;
+const STREAM_FLUSH_MS = 4000;
 
 async function streamAnalysis(
   messages: Anthropic.MessageParam[],

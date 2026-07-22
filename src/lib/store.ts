@@ -101,7 +101,13 @@ function localPath(): string {
 
 const g = globalThis as unknown as {
   __satoshiDocCache?: { doc: StateDoc; rev: number; at: number };
+  __satoshiLastList?: number;
 };
+
+// Public-read cache TTL. Combined with the edge cache on /api/state this
+// bounds storage "advanced operations" to roughly one list per instance per
+// few seconds regardless of audience size.
+const READ_CACHE_MS = 4000;
 
 interface VersionRef {
   rev: number;
@@ -125,12 +131,11 @@ async function listVersions(): Promise<VersionRef[]> {
 
 /** Read the state document. `fresh` bypasses the tiny read cache (writers must use fresh). */
 export async function readDoc(fresh = false): Promise<StateDoc> {
-  const cacheTtl = fresh ? 0 : 1500;
+  const cacheTtl = fresh ? 0 : READ_CACHE_MS;
   if (cacheTtl && g.__satoshiDocCache && Date.now() - g.__satoshiDocCache.at < cacheTtl) {
     return g.__satoshiDocCache.doc;
   }
 
-  let doc: StateDoc | null = null;
   if (blobToken()) {
     try {
       const versions = await listVersions();
@@ -143,21 +148,33 @@ export async function readDoc(fresh = false): Promise<StateDoc> {
         }
         // Version files are immutable, so a plain fetch can never be stale.
         const res = await fetch(latest.url, { cache: "no-store" });
-        if (res.ok) doc = (await res.json()) as StateDoc;
+        if (!res.ok) throw new Error(`version fetch ${res.status}`);
+        const doc = (await res.json()) as StateDoc;
+        g.__satoshiDocCache = { doc, rev: doc.rev, at: Date.now() };
+        return doc;
       }
+      // Store is genuinely empty (fresh install / post-reset baseline).
+      const empty = emptyDoc();
+      g.__satoshiDocCache = { doc: empty, rev: empty.rev, at: Date.now() };
+      return empty;
     } catch (err) {
       console.error("[store] blob read failed:", err);
-      // Fall back to the last known doc rather than resetting to empty.
-      if (g.__satoshiDocCache) return g.__satoshiDocCache.doc;
-    }
-  } else {
-    try {
-      doc = JSON.parse(fs.readFileSync(localPath(), "utf8")) as StateDoc;
-    } catch {
-      doc = null;
+      // Serve the last good doc if we have one; otherwise an UNCACHED empty
+      // doc, so recovery happens on the next read instead of sticking.
+      if (g.__satoshiDocCache) {
+        g.__satoshiDocCache.at = Date.now();
+        return g.__satoshiDocCache.doc;
+      }
+      return emptyDoc();
     }
   }
 
+  let doc: StateDoc | null = null;
+  try {
+    doc = JSON.parse(fs.readFileSync(localPath(), "utf8")) as StateDoc;
+  } catch {
+    doc = null;
+  }
   const result = doc ?? emptyDoc();
   g.__satoshiDocCache = { doc: result, rev: result.rev, at: Date.now() };
   return result;
@@ -176,19 +193,22 @@ export async function writeDoc(doc: StateDoc): Promise<void> {
       addRandomSuffix: false,
       contentType: "application/json",
     });
-    // Best-effort cleanup of old versions (keep a few for safety).
-    void (async () => {
-      try {
-        const versions = await listVersions();
-        const stale = versions.filter((v) => v.rev < doc.rev - 4);
-        if (stale.length) {
-          const { del } = await import("@vercel/blob");
-          await del(stale.map((v) => v.url), { token: blobToken() });
+    // Best-effort cleanup of old versions (keep a few for safety). Runs
+    // every 10th revision so writes normally cost one simple operation.
+    if (doc.rev % 10 === 0) {
+      void (async () => {
+        try {
+          const versions = await listVersions();
+          const stale = versions.filter((v) => v.rev < doc.rev - 4);
+          if (stale.length) {
+            const { del } = await import("@vercel/blob");
+            await del(stale.map((v) => v.url), { token: blobToken() });
+          }
+        } catch {
+          /* cleanup only */
         }
-      } catch {
-        /* cleanup only */
-      }
-    })();
+      })();
+    }
   } else {
     fs.writeFileSync(localPath(), body);
   }
