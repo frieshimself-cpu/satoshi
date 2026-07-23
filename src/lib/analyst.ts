@@ -153,7 +153,7 @@ function extractionPrompt(analysis: string): string {
   ],
   "mostDecisiveNextEvidence": string
 }
-Rules: include EVERY candidate id exactly once; pcts must sum to 100; "${UNKNOWN_ID}" must be >= ${UNKNOWN_FLOOR}. Evidence sentences must be phrased as evidence-weighted likelihood ("the public evidence is consistent with..."), never assertion.
+Rules: include EVERY candidate id exactly once; pcts must sum to 100; "${UNKNOWN_ID}" must be >= ${UNKNOWN_FLOOR}. Copy each candidate's pct faithfully from the analysis; render "<1" or "less than 1" as 0.5. NEVER invent or inflate a value to force the total — if the analysis values do not sum to 100, still copy them faithfully (the server rescales proportionally). Evidence sentences must be phrased as evidence-weighted likelihood ("the public evidence is consistent with..."), never assertion.
 
 ANALYSIS:
 ${analysis}`;
