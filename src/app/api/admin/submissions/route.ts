@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isMirror } from "@/lib/store";
 import { isAuthed } from "@/lib/auth";
 import { getSubmissions, setSubmissionStatus, type SubmissionRow } from "@/lib/db";
 
@@ -33,6 +34,12 @@ export async function GET() {
 
 /** Operator override: approve or reject a submission that isn't released yet. */
 export async function POST(req: Request) {
+  if (isMirror()) {
+    return NextResponse.json(
+      { error: "Read-only mirror: the investigation is operated externally." },
+      { status: 409 }
+    );
+  }
   if (!isAuthed()) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

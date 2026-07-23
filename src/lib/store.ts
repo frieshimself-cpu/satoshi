@@ -129,11 +129,48 @@ async function listVersions(): Promise<VersionRef[]> {
     .sort((a, b) => b.rev - a.rev || (a.pathname < b.pathname ? 1 : -1));
 }
 
+/**
+ * Mirror mode: when STATE_SOURCE_URL is set, this deployment is a read-only
+ * mirror of an externally operated show — state is fetched from a public URL
+ * (e.g. a raw.githubusercontent file pushed by the operator) and all writes
+ * are rejected.
+ */
+export function isMirror(): boolean {
+  return !!process.env.STATE_SOURCE_URL;
+}
+
 /** Read the state document. `fresh` bypasses the tiny read cache (writers must use fresh). */
 export async function readDoc(fresh = false): Promise<StateDoc> {
   const cacheTtl = fresh ? 0 : READ_CACHE_MS;
   if (cacheTtl && g.__satoshiDocCache && Date.now() - g.__satoshiDocCache.at < cacheTtl) {
     return g.__satoshiDocCache.doc;
+  }
+
+  if (isMirror()) {
+    try {
+      // Time-bucketed query key: the upstream CDN caches each bucket briefly,
+      // so viewers converge within a few seconds without hammering origin.
+      const bucket = Math.floor(Date.now() / 4000);
+      const res = await fetch(`${process.env.STATE_SOURCE_URL}?v=${bucket}`, {
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error(`state source ${res.status}`);
+      const doc = (await res.json()) as StateDoc;
+      // Never move backwards if a stale CDN node answers.
+      if (g.__satoshiDocCache && g.__satoshiDocCache.rev > doc.rev) {
+        g.__satoshiDocCache.at = Date.now();
+        return g.__satoshiDocCache.doc;
+      }
+      g.__satoshiDocCache = { doc, rev: doc.rev, at: Date.now() };
+      return doc;
+    } catch (err) {
+      console.error("[store] mirror read failed:", err);
+      if (g.__satoshiDocCache) {
+        g.__satoshiDocCache.at = Date.now();
+        return g.__satoshiDocCache.doc;
+      }
+      return emptyDoc();
+    }
   }
 
   if (blobToken()) {
@@ -181,6 +218,9 @@ export async function readDoc(fresh = false): Promise<StateDoc> {
 }
 
 export async function writeDoc(doc: StateDoc): Promise<void> {
+  if (isMirror()) {
+    throw new Error("read-only mirror: state is operated externally");
+  }
   doc.rev += 1;
   const body = JSON.stringify(doc);
   if (blobToken()) {

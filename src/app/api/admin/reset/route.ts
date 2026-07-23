@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isMirror } from "@/lib/store";
 import { isAuthed } from "@/lib/auth";
 import { broadcast, getBus } from "@/lib/bus";
 import { resetAll } from "@/lib/db";
@@ -8,6 +9,12 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  if (isMirror()) {
+    return NextResponse.json(
+      { error: "Read-only mirror: the investigation is operated externally." },
+      { status: 409 }
+    );
+  }
   if (!isAuthed()) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

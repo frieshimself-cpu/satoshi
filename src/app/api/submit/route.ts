@@ -9,6 +9,7 @@ import {
   rateLimitOk,
   saveUpload,
 } from "@/lib/uploads";
+import { isMirror } from "@/lib/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,6 +19,12 @@ export const maxDuration = 120;
 const MAX_UNRELEASED = 300; // global backstop against queue flooding
 
 export async function POST(req: Request) {
+  if (isMirror()) {
+    return NextResponse.json(
+      { error: "Submissions are temporarily paused while the investigation runs. Check back soon." },
+      { status: 503 }
+    );
+  }
   const ip =
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     req.headers.get("x-real-ip") ||
