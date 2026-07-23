@@ -139,6 +139,44 @@ export function isMirror(): boolean {
   return !!process.env.STATE_SOURCE_URL;
 }
 
+/**
+ * Fetch the mirrored state document. raw.githubusercontent.com caches
+ * branch-name URLs for ~5 minutes, which is far too stale for a live show, so
+ * for GitHub sources we resolve the branch tip ourselves via the git smart-HTTP
+ * ref advertisement (uncached) and fetch the file by immutable commit SHA.
+ */
+async function fetchMirrorDoc(): Promise<StateDoc> {
+  const src = process.env.STATE_SOURCE_URL!;
+  const gh = src.match(
+    /^https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/refs\/heads\/([^/]+)\/(.+)$/
+  );
+  if (gh) {
+    const [, owner, repo, branch, filePath] = gh;
+    const refs = await fetch(
+      `https://github.com/${owner}/${repo}.git/info/refs?service=git-upload-pack`,
+      { cache: "no-store" }
+    );
+    if (refs.ok) {
+      const text = await refs.text();
+      const m = text.match(new RegExp(`([0-9a-f]{40}) refs/heads/${branch}\\b`));
+      if (m) {
+        const res = await fetch(
+          `https://raw.githubusercontent.com/${owner}/${repo}/${m[1]}/${filePath}`,
+          { cache: "no-store" }
+        );
+        if (!res.ok) throw new Error(`state source ${res.status}`);
+        return (await res.json()) as StateDoc;
+      }
+    }
+  }
+  // Non-GitHub source (or ref lookup failed): plain fetch with a short
+  // time-bucketed cache-buster.
+  const bucket = Math.floor(Date.now() / 4000);
+  const res = await fetch(`${src}?v=${bucket}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`state source ${res.status}`);
+  return (await res.json()) as StateDoc;
+}
+
 /** Read the state document. `fresh` bypasses the tiny read cache (writers must use fresh). */
 export async function readDoc(fresh = false): Promise<StateDoc> {
   const cacheTtl = fresh ? 0 : READ_CACHE_MS;
@@ -148,14 +186,7 @@ export async function readDoc(fresh = false): Promise<StateDoc> {
 
   if (isMirror()) {
     try {
-      // Time-bucketed query key: the upstream CDN caches each bucket briefly,
-      // so viewers converge within a few seconds without hammering origin.
-      const bucket = Math.floor(Date.now() / 4000);
-      const res = await fetch(`${process.env.STATE_SOURCE_URL}?v=${bucket}`, {
-        cache: "no-store",
-      });
-      if (!res.ok) throw new Error(`state source ${res.status}`);
-      const doc = (await res.json()) as StateDoc;
+      const doc = await fetchMirrorDoc();
       // Never move backwards if a stale CDN node answers.
       if (g.__satoshiDocCache && g.__satoshiDocCache.rev > doc.rev) {
         g.__satoshiDocCache.at = Date.now();
