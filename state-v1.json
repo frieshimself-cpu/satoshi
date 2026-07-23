@@ -1,1 +1,1 @@
-{"rev": 0, "releases": {}, "transcripts": [], "snapshots": [], "submissions": [], "batches": [], "streaming": {"active": false, "kind": null, "dossierIndex": null, "text": "", "updatedAt": null}, "nextId": 1}
+{"rev":3,"releases":{"1":"2026-07-23T06:08:14.265Z"},"transcripts":[{"id":1,"kind":"dossier","dossier_index":1,"content":"","status":"streaming","started_at":"2026-07-23T06:08:14.266Z","completed_at":null}],"snapshots":[],"submissions":[],"batches":[],"streaming":{"active":false,"kind":null,"dossierIndex":null,"text":"","updatedAt":null},"nextId":2}
