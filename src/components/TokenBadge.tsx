@@ -2,13 +2,18 @@
 
 import { useState } from "react";
 
-const BADGES = [
-  { ca: process.env.NEXT_PUBLIC_TOKEN_CA, label: process.env.NEXT_PUBLIC_TOKEN_CA_LABEL || "CA" },
-  {
-    ca: process.env.NEXT_PUBLIC_TOKEN_CA2,
-    label: process.env.NEXT_PUBLIC_TOKEN_CA2_LABEL || "CA2",
-  },
-].filter((b): b is { ca: string; label: string } => !!b.ca);
+// Pre-launch: contract addresses are hidden until the operator flips them on.
+const COMING_SOON = process.env.NEXT_PUBLIC_TOKEN_COMING_SOON !== "0";
+
+const BADGES = COMING_SOON
+  ? []
+  : [
+      { ca: process.env.NEXT_PUBLIC_TOKEN_CA, label: process.env.NEXT_PUBLIC_TOKEN_CA_LABEL || "CA" },
+      {
+        ca: process.env.NEXT_PUBLIC_TOKEN_CA2,
+        label: process.env.NEXT_PUBLIC_TOKEN_CA2_LABEL || "CA2",
+      },
+    ].filter((b): b is { ca: string; label: string } => !!b.ca);
 
 function Chip({ ca, label }: { ca: string; label: string }) {
   const [copied, setCopied] = useState(false);
@@ -42,6 +47,14 @@ function Chip({ ca, label }: { ca: string; label: string }) {
 
 /** Optional token contract-address chips. Renders nothing unless configured. */
 export default function TokenBadge() {
+  if (COMING_SOON) {
+    return (
+      <div className="flex items-center gap-1.5 border border-amber-dim/60 px-2 py-0.5 text-[10px] tracking-widest text-amber-glow">
+        <span className="text-amber-glow/70">CA</span>
+        <span className="font-bold">COMING SOON</span>
+      </div>
+    );
+  }
   if (!BADGES.length) return null;
   return (
     <div className="flex flex-wrap items-center gap-1.5">
