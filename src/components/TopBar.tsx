@@ -9,12 +9,14 @@ export default function TopBar({
   isStreaming,
   connected,
   synthesisTriggered,
+  demo,
 }: {
   releasedCount: number;
   totalDossiers: number;
   isStreaming: boolean;
   connected: boolean;
   synthesisTriggered: boolean;
+  demo: boolean;
 }) {
   return (
     <header className="border-b border-charcoal-600 bg-charcoal-950/95 sticky top-0 z-40">
@@ -52,6 +54,11 @@ export default function TopBar({
         </div>
 
         <div className="flex items-center gap-4 ml-auto text-[11px] tracking-widest">
+          {demo && (
+            <span className="border border-alert/70 text-alert px-2 py-0.5 font-bold animate-pulseglow">
+              DEMO MODE — SIMULATED ANALYSIS
+            </span>
+          )}
           {isStreaming ? (
             <span className="text-amber-glow text-glow-amber animate-pulseglow">
               ● ANALYZING

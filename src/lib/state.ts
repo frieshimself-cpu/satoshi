@@ -9,6 +9,7 @@ import {
   getSubmissionsByBatch,
   getTranscripts,
 } from "./db";
+import { readDoc } from "./store";
 import type { AppState, CommunityBatch, PublicDossier } from "./types";
 
 export async function getAppState(): Promise<AppState> {
@@ -76,5 +77,8 @@ export async function getAppState(): Promise<AppState> {
     },
     releasedCount: released.size,
     totalDossiers: dossiers.length,
+    // The demo flag lives in the state doc so the operator can mark a whole
+    // run as simulated; the UI must surface it wherever analysis is shown.
+    demo: !!((await readDoc()) as { demo?: boolean }).demo,
   };
 }

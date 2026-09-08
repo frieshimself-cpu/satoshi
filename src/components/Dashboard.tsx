@@ -34,6 +34,7 @@ export default function Dashboard() {
         isStreaming={inv.isStreaming}
         connected={inv.connected}
         synthesisTriggered={s.synthesis.triggered}
+        demo={s.demo}
       />
 
       {/* Mobile tab switcher */}

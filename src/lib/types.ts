@@ -124,6 +124,8 @@ export interface AppState {
   totalDossiers: number;
   /** Released community evidence drops (public projection). */
   communityBatches: CommunityBatch[];
+  /** True when the show is running simulated (non-live) analysis. */
+  demo: boolean;
 }
 
 export type BusEvent =
